@@ -34,6 +34,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 public class ColorBlobDetectionActivity extends Activity implements OnTouchListener, CvCameraViewListener2 {
@@ -54,9 +55,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private boolean              isTracking = false;
     private Button               startTracking;
     private Button               stopTracking;
+    private SeekBar              seekBarH, seekBarS, seekBarV;
+    private int                  Hval, Sval, Vval;
+    private Scalar               colorRadius;
     //private boolean              isStart = false;
-
-
 
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -98,11 +100,77 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 Log.e(TAG,"Tracking turned ON!");
             }
         });
+
         stopTracking.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 isTracking = false;
                 Log.e(TAG,"Tracking turned OFF!");
+            }
+        });
+
+        seekBarH = (SeekBar)findViewById(R.id.seekBarH);
+        seekBarS = (SeekBar)findViewById(R.id.seekBarS);
+        seekBarV = (SeekBar)findViewById(R.id.seekBarV);
+
+
+        seekBarH.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int currentProg;
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                currentProg = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Hval = currentProg;
+                Toast.makeText(getApplicationContext(),"Final H Val " + Hval,Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
+        seekBarS.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int currentProg;
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                currentProg = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Sval = currentProg;
+                Toast.makeText(getApplicationContext(),"Final S Val " + Sval,Toast.LENGTH_SHORT).show();
+
+            }
+        });
+
+        seekBarV.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            int currentProg;
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                currentProg = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Vval = currentProg;
+                Toast.makeText(getApplicationContext(),"Final V Val " + Vval,Toast.LENGTH_SHORT).show();
+
             }
         });
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.color_blob_detection_activity_surface_view);
@@ -152,7 +220,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         mSpectrum = new Mat();
         mBlobColorRgba = new Scalar(255);
         mBlobColorHsv = new Scalar(255);
-        SPECTRUM_SIZE = new Size(200, 64);
+        SPECTRUM_SIZE = new Size(100, 32);
         CONTOUR_COLOR = new Scalar(255,0,0,255);
     }
 
@@ -200,9 +268,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         mDetector.setHsvColor(mBlobColorHsv);
 
+
         Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
 
         mIsColorSelected = true;
+
 
         touchedRegionRgba.release();
         touchedRegionHsv.release();
@@ -212,9 +282,12 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         mRgba = inputFrame.rgba();
+        colorRadius = new Scalar(Hval,Sval,Vval,0);
 
         if (mIsColorSelected) {
+            mDetector.setColorRadius(colorRadius);
             mDetector.process(mRgba);
+
             List<MatOfPoint> contours = mDetector.getContours();
 
             MatOfPoint cnt;
@@ -265,13 +338,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                            Log.e(TAG,"Max Capacity of List Reached !");
                        }
                    }
-
-
-
-
-
             }
-            Mat colorLabel = mRgba.submat(4, 68, 4, 68);
+            Mat colorLabel = mRgba.submat(4, mSpectrum.rows(), 4, mSpectrum.rows());
             colorLabel.setTo(mBlobColorRgba);
 
             Mat spectrumLabel = mRgba.submat(4, 4 + mSpectrum.rows(), 70, 70 + mSpectrum.cols());

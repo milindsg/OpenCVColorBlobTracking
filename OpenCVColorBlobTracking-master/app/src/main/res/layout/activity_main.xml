@@ -10,7 +10,9 @@
     <org.opencv.android.JavaCameraView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:id="@+id/color_blob_detection_activity_surface_view" />
+        android:id="@+id/color_blob_detection_activity_surface_view"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
 
     <Button
         android:layout_width="wrap_content"
@@ -29,5 +31,76 @@
         android:layout_alignTop="@+id/trackButtonUI"
         android:layout_alignParentEnd="true"
         android:layout_marginEnd="73dp" />
+
+    <SeekBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/seekBarH"
+        android:max="255"
+        android:layout_above="@+id/seekBarS"
+        android:layout_alignParentStart="true"
+        android:layout_alignEnd="@+id/trackButtonUI" />
+
+    <SeekBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/seekBarS"
+        android:max="255"
+        android:layout_above="@+id/seekBarV"
+        android:layout_alignParentStart="true"
+        android:layout_alignEnd="@+id/trackButtonUI" />
+
+    <SeekBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/seekBarV"
+        android:max="255"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignEnd="@+id/trackButtonUI" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/HSVRadiusTextView"
+        android:text="Adjust Sliders to Change Color Radius"
+        android:textColor="#ffffff"
+        android:gravity="center"
+        android:layout_below="@+id/seekBarV"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/trackButtonUI"
+        android:layout_alignEnd="@+id/editText" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/Hval"
+        android:layout_alignBottom="@+id/seekBarH"
+        android:layout_toEndOf="@+id/seekBarH"
+        android:text="H"
+        android:textSize="10dp"
+        android:textColor="#aaff02" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/Sval"
+        android:text="S"
+        android:textSize="10dp"
+        android:textColor="#aaff02"
+        android:layout_above="@+id/seekBarV"
+        android:layout_toEndOf="@+id/seekBarH"
+        android:gravity="center_vertical" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/editText"
+        android:text="V"
+        android:textSize="10dp"
+        android:textColor="#aaff02"
+        android:gravity="center_vertical"
+        android:layout_alignBottom="@+id/seekBarV"
+        android:layout_toEndOf="@+id/seekBarS" />
 
 </RelativeLayout>
