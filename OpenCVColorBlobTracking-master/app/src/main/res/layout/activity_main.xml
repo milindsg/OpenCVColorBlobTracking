@@ -59,48 +59,81 @@
         android:layout_alignParentStart="true"
         android:layout_alignEnd="@+id/trackButtonUI" />
 
-    <EditText
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/HSVRadiusTextView"
-        android:text="Adjust Sliders to Change Color Radius"
-        android:textColor="#ffffff"
-        android:gravity="center"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Adjust Sliders to change Color Radius and Touch ROI again"
+        android:id="@+id/textView"
         android:layout_below="@+id/seekBarV"
-        android:layout_alignParentStart="true"
-        android:layout_above="@+id/trackButtonUI"
-        android:layout_alignEnd="@+id/editText" />
+        android:textColor="#f4f81a"
+        android:layout_alignEnd="@+id/seekBarV" />
 
-    <EditText
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/Hval"
-        android:layout_alignBottom="@+id/seekBarH"
-        android:layout_toEndOf="@+id/seekBarH"
+        android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="H"
-        android:textSize="10dp"
-        android:textColor="#aaff02" />
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/Sval"
-        android:text="S"
-        android:textSize="10dp"
-        android:textColor="#aaff02"
-        android:layout_above="@+id/seekBarV"
+        android:id="@+id/textView2"
+        android:layout_above="@+id/seekBarS"
         android:layout_toEndOf="@+id/seekBarH"
-        android:gravity="center_vertical" />
+        android:textColor="#dff70a" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="V"
+        android:id="@+id/textView3"
+        android:layout_above="@+id/textView"
+        android:layout_toEndOf="@+id/seekBarS"
+        android:layout_below="@+id/seekBarS"
+        android:textColor="#bbee14" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="S"
+        android:id="@+id/textView5"
+        android:layout_below="@+id/seekBarH"
+        android:layout_above="@+id/seekBarV"
+        android:layout_alignEnd="@+id/textView3"
+        android:layout_toEndOf="@+id/seekBarH"
+        android:textColor="#b1f909" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tracking OFF"
+        android:id="@+id/trackStatus"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:textColor="#e2f60b"
+        android:textStyle="bold" />
 
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/editText"
-        android:text="V"
-        android:textSize="10dp"
-        android:textColor="#aaff02"
-        android:gravity="center_vertical"
-        android:layout_alignBottom="@+id/seekBarV"
-        android:layout_toEndOf="@+id/seekBarS" />
+        android:inputType="number"
+        android:ems="10"
+        android:id="@+id/editTextMass"
+        android:numeric="decimal"
+        android:textSize="15dp"
+        android:textStyle="normal"
+        android:textColor="#a4f708"
+        android:width="90dp"
+        android:hint="Enter Mass"
+        android:layout_alignParentTop="true"
+        android:layout_alignStart="@+id/stopButtonUI" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Avg. Velocity "
+        android:id="@+id/tvAvgVelUI"
+        android:layout_below="@+id/editTextMass"
+        android:layout_alignStart="@+id/editTextMass"
+        android:layout_alignEnd="@+id/editTextMass" />
 
 </RelativeLayout>

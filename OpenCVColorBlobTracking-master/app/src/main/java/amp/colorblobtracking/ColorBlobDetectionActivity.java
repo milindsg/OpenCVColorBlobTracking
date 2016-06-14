@@ -20,6 +20,7 @@ import org.opencv.core.Point;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.imgproc.Imgproc;
+import org.w3c.dom.Text;
 
 import android.Manifest;
 import android.app.Activity;
@@ -27,6 +28,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -34,7 +37,9 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class ColorBlobDetectionActivity extends Activity implements OnTouchListener, CvCameraViewListener2 {
@@ -49,8 +54,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private Size                 SPECTRUM_SIZE;
     private Scalar               CONTOUR_COLOR;
     private int                  maxVals=10000;
-    private ArrayList            locations = new ArrayList();
-    private ArrayList            timeStamps = new ArrayList();
+    //private ArrayList            locations = new ArrayList();
+    //private ArrayList            timeStamps = new ArrayList();
     private CameraBridgeViewBase mOpenCvCameraView;
     private boolean              isTracking = false;
     private Button               startTracking;
@@ -58,7 +63,14 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private SeekBar              seekBarH, seekBarS, seekBarV;
     private int                  Hval, Sval, Vval;
     private Scalar               colorRadius;
+    private EditText             massEditText;
+    private TextView             trackStatus;
+    private double               mass;
     //private boolean              isStart = false;
+    private ArrayList locations = new ArrayList();
+    private ArrayList timeStamps = new ArrayList();
+    private ArrayList instantVelocities = new ArrayList(); //will contain the instant velocity for time between 0.1 and 0.9
+    private TextView  avgVel;
 
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -78,6 +90,56 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
     };
 
+    public  void makeInstantVelocitiesList(){
+
+        //note that since we are using index i-1 and i+1 to calculate the velocity for index i.
+        //this means we cannot calculate the instant velocity for when i = 0 and i = positions.size()
+        //However if you know you are starting from 0, you can put a 0 at the start of the 'instantVelocities' list.
+
+        for (int i = 1; i < locations.size()-1; i = i + 1) {
+            double p1 = (double)locations.get(i - 1);
+            double p2 = (double)locations.get(i + 1);
+            double t1 = (double)timeStamps.get(i - 1);
+            double t2 = (double)timeStamps.get(i + 1);
+
+            double instantVelocity = (p2 - p1) / (t2 - t1);
+
+            instantVelocities.add(instantVelocity);
+        }
+    }
+
+    public  double getChangeInVelocity(){
+        double initialX = (double)locations.get(0);
+        double finalX = (double)locations.get(locations.size()-1);
+        long initialTime = (long)timeStamps.get(0); //should be 0
+        long finalTime = (long)timeStamps.get(timeStamps.size() - 1);
+
+        long changeInTimeLong = (finalTime - initialTime);
+        double changeInTime = (double)changeInTimeLong/Math.pow(10,9);
+        double changeInPos = finalX - initialX;
+
+        return changeInPos/changeInTime;
+    }
+
+    public  double getChangeInKinetic(){
+        //Kinetic Energy = (1/2)mv^2
+        double initialVelocity = (double)instantVelocities.get(0); //get the first
+        double finalVelocity = (double)instantVelocities.get(instantVelocities.size()-1); //get the last
+
+        double initialKinetic = (1/2)*mass*(Math.pow(initialVelocity, 2)); //Math.pow(base, exponent)
+        double finalKinetic = (1/2)*mass*(Math.pow(finalVelocity, 2));
+
+        double changeInKinetic = finalKinetic - initialKinetic;
+
+        return changeInKinetic;
+
+    }
+
+    public  double getPower(double changeInKineticPassed, double changeInTimePassed){
+        double power = changeInKineticPassed/changeInTimePassed;
+        return power;
+    }
+
     public ColorBlobDetectionActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
@@ -91,6 +153,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.activity_main);
+        trackStatus = (TextView) findViewById(R.id.trackStatus);
         startTracking = (Button)findViewById(R.id.trackButtonUI);
         stopTracking = (Button)findViewById(R.id.stopButtonUI);
         startTracking.setOnClickListener(new View.OnClickListener() {
@@ -98,6 +161,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             public void onClick(View v) {
                 isTracking = true;
                 Log.e(TAG,"Tracking turned ON!");
+                trackStatus.setText("Tracking ON!");
             }
         });
 
@@ -106,8 +170,40 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             public void onClick(View v) {
                 isTracking = false;
                 Log.e(TAG,"Tracking turned OFF!");
+                trackStatus.setText("Tracking OFF! Avg Speed = " + String.format("%3.2f",getChangeInVelocity()));
+
+                //double deltaX = Math.abs((double)locations.get(locations.size()-1)-(double)locations.get(0)) ;
+                //Toast.makeText(getApplicationContext(),"Delta Time: "+deltaTime,Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(),"Delta X: "+deltaX,Toast.LENGTH_SHORT).show();
+
+
+
             }
         });
+        massEditText = (EditText) findViewById(R.id.editTextMass);
+        massEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length()!=0) {
+                    mass = Double.parseDouble(massEditText.getText().toString());
+                   // Toast.makeText(getApplicationContext(), "Mass is " + mass, Toast.LENGTH_SHORT).show();
+                }
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+
+            }
+        });
+
+        avgVel = (TextView) findViewById(R.id.tvAvgVelUI);
 
         seekBarH = (SeekBar)findViewById(R.id.seekBarH);
         seekBarS = (SeekBar)findViewById(R.id.seekBarS);
@@ -169,6 +265,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 Vval = currentProg;
+
                 Toast.makeText(getApplicationContext(),"Final V Val " + Vval,Toast.LENGTH_SHORT).show();
 
             }
@@ -184,7 +281,6 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             };
             ActivityCompat.requestPermissions(this, CAMERA_PERMISSIONS, 0);
         }
-
     }
 
     @Override
@@ -269,7 +365,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         mDetector.setHsvColor(mBlobColorHsv);
 
 
-        Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
+        //Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
 
         mIsColorSelected = true;
 
@@ -290,7 +386,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
             List<MatOfPoint> contours = mDetector.getContours();
 
-            MatOfPoint cnt;
+           // MatOfPoint cnt;
             //Log.e(TAG, "Contours count: " + contours.size());
             Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR,3);
             MatOfPoint2f approxCurve = new MatOfPoint2f();
@@ -339,11 +435,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                        }
                    }
             }
-            Mat colorLabel = mRgba.submat(4, mSpectrum.rows(), 4, mSpectrum.rows());
-            colorLabel.setTo(mBlobColorRgba);
+        //    Mat colorLabel = mRgba.submat(4, mSpectrum.rows(), 4, mSpectrum.rows());
+        //    colorLabel.setTo(mBlobColorRgba);
 
-            Mat spectrumLabel = mRgba.submat(4, 4 + mSpectrum.rows(), 70, 70 + mSpectrum.cols());
-            mSpectrum.copyTo(spectrumLabel);
+        //    Mat spectrumLabel = mRgba.submat(4, 4 + mSpectrum.rows(), 70, 70 + mSpectrum.cols());
+        //    mSpectrum.copyTo(spectrumLabel);
         }
 
         return mRgba;
